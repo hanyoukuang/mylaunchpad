@@ -5,7 +5,7 @@ from functools import partial
 
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QGridLayout, QToolButton, QScrollArea, QLineEdit, \
-    QVBoxLayout, QStackedWidget
+    QVBoxLayout
 from PyQt6.QtGui import QIcon
 
 
@@ -42,6 +42,7 @@ class AppController:
 class Launcher(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.controller = AppController()
 
         self.apps = self.controller.get_apps()
@@ -50,7 +51,6 @@ class Launcher(QMainWindow):
         self.scroll_widget = QWidget()
         self.scroll = QScrollArea()
         self.grid = QGridLayout(self.scroll_widget)
-        self.stacked = QStackedWidget()
 
         self.edit = QLineEdit()
         self.vbox.addWidget(self.edit)
@@ -106,8 +106,7 @@ class Launcher(QMainWindow):
         self.vbox.addWidget(self.scroll)
         self.scroll.setWidget(self.scroll_widget)
         self.scroll.setWidgetResizable(True)
-        self.stacked.addWidget(self.vbox_widget)
-        self.setCentralWidget(self.stacked)
+        self.setCentralWidget(self.vbox_widget)
         self.showFullScreen()
 
     def mousePressEvent(self, event):
