@@ -3,6 +3,7 @@ import sys
 import subprocess
 from functools import partial
 
+import qdarktheme
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QGridLayout, QToolButton, QScrollArea, QLineEdit, \
     QVBoxLayout
@@ -19,7 +20,7 @@ class AppController:
         for entry in os.scandir(f"{path}/Contents/Resources"):
             if entry.name.endswith(".icns"):
                 return entry.path
-        return "empty"
+        return "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertNoteIcon.icns"
 
     def search_apps(self, path):
         for entry in os.scandir(path):
@@ -115,6 +116,7 @@ class Launcher(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    qdarktheme.setup_theme("light")
     ex = Launcher()
     ex.show()
     sys.exit(app.exec())
