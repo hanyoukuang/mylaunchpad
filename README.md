@@ -1,5 +1,5 @@
 # mylaunchpad
-## Since Apple will cancel the launch pad in macos 26, a simple replacement was created.
+## 手写启动台，以应对macos26只有聚焦的困境.
 
 ```shell
 pip install pyqt6
