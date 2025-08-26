@@ -6,8 +6,13 @@ from functools import partial
 import qdarktheme
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QWidget, QApplication, QGridLayout, QToolButton, QScrollArea, QLineEdit, \
-    QVBoxLayout
+    QVBoxLayout, QStackedWidget
 from PyQt6.QtGui import QIcon
+
+
+def open_app(name, gui):
+    subprocess.run(['open', '-a', name])
+    gui.close()
 
 
 class AppController:
@@ -34,31 +39,14 @@ class AppController:
             self.search_apps(path)
         return self.apps
 
-    @staticmethod
-    def open_app(name, gui):
-        subprocess.run(['open', '-a', name])
-        gui.close()
 
-
-class Launcher(QMainWindow):
+class DisplayAppWidget(QWidget):
     def __init__(self):
         super().__init__()
-
-        self.controller = AppController()
-
-        self.apps = self.controller.get_apps()
-        self.vbox_widget = QWidget()
-        self.vbox = QVBoxLayout(self.vbox_widget)
         self.scroll_widget = QWidget()
         self.scroll = QScrollArea()
         self.grid = QGridLayout(self.scroll_widget)
-
-        self.edit = QLineEdit()
-        self.vbox.addWidget(self.edit)
-        self.edit.textChanged.connect(self.get_change_text)
-
         self.init_ui()
-        self.insert_apps(self.apps)
 
     def clear_all_apps(self):
         item_list = list(range(self.grid.count()))
@@ -69,27 +57,15 @@ class Launcher(QMainWindow):
             if item.widget():
                 item.widget().deleteLater()
 
-    def get_change_text(self, text):
-        self.clear_all_apps()
-        if text == "":
-            self.insert_apps(self.apps)
-            return
-        text = text.lower()
-        apps = []
-        for name, icon in self.apps:
-            if text in name.lower():
-                apps.append((name, icon))
-        self.insert_apps(apps)
-
     def insert_apps(self, apps):
         row = 0
         col = 0
-        icon_width = (self.width() - (50 * 6)) // 5
-        icon_height = (self.height() - (50 * 6)) // 5
+        icon_width = (self.width() - (10 * 6)) // 5
+        icon_height = (self.height() - (10 * 6)) // 5
         for name, icon in apps:
             button = QToolButton()
             button.setText(name)
-            button.clicked.connect(partial(self.controller.open_app, button.text(), self))
+            button.clicked.connect(partial(open_app, button.text(), self))
             self.grid.addWidget(button, row, col)
             if icon == 'empty':
                 continue
@@ -101,12 +77,48 @@ class Launcher(QMainWindow):
             if col >= 5:
                 row += 1
                 col = 0
-        self.grid.setSpacing(50)
+        self.grid.setSpacing(10)
 
     def init_ui(self):
-        self.vbox.addWidget(self.scroll)
         self.scroll.setWidget(self.scroll_widget)
         self.scroll.setWidgetResizable(True)
+
+
+class LaunchPad(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.stacked = QStackedWidget()
+        self.vbox_widget = QWidget()
+        self.vbox = QVBoxLayout(self.vbox_widget)
+        self.all_app_widget = DisplayAppWidget()
+        self.search_app_widget = DisplayAppWidget()
+        self.app_controller = AppController()
+        self.apps = self.app_controller.get_apps()
+
+        self.edit = QLineEdit()
+
+        self.init_ui()
+
+    def get_search_value(self, text):
+        if text == "":
+            self.stacked.setCurrentIndex(0)
+            return
+        self.stacked.setCurrentIndex(1)
+        self.search_app_widget.clear_all_apps()
+        text = text.lower()
+        apps = []
+        for name, icon in self.apps:
+            if text in name.lower():
+                apps.append((name, icon))
+        self.search_app_widget.insert_apps(apps)
+
+    def init_ui(self):
+        self.edit.textChanged.connect(self.get_search_value)
+        self.all_app_widget.insert_apps(self.apps)
+        self.vbox.addWidget(self.edit)
+        self.stacked.addWidget(self.all_app_widget.scroll)
+        self.stacked.addWidget(self.search_app_widget.scroll)
+        self.vbox.addWidget(self.stacked)
         self.setCentralWidget(self.vbox_widget)
         self.showFullScreen()
 
@@ -117,6 +129,6 @@ class Launcher(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     qdarktheme.setup_theme("light")
-    ex = Launcher()
-    ex.show()
+    launch = LaunchPad()
+    launch.show()
     sys.exit(app.exec())
